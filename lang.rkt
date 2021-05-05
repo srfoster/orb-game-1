@@ -15,6 +15,8 @@
          red
          blue
          orange
+
+         start-game
          
          #%app
          #%top
@@ -50,37 +52,75 @@
    (hash 'id "PointLight2_4"
          'type "actor")))
 
+; (unreal-eval-js (spawn "Hello"))
 (define/contract (spawn twitch-id)
   (-> string? unreal-value?)
   
   (define js
     @unreal-value{
  var Spawn = Root.ResolveClass('PickupMini');
- var spawn = new Spawn(GWorld,{X:0,Y:0,Z:1200});
- spawn.ChangeName(@(->unreal-value twitch-id));
-
+ var spawn = new Spawn(GWorld,{X:0,Y:0,Z:0});
+ spawn.ChangeName(@(->unreal-value twitch-id))
+ 
  return spawn;
  })
-
+  
   (with-name twitch-id js))
 
 (define (respawn spawn)
-   @unreal-value{
+  @unreal-value{
  var spawn = @(->unreal-value spawn);
- spawn.SetActorLocation({X: 0, Y: 0, Z: 1200});
+ spawn.SetActorLocation({X: 0, Y: 0, Z: 0});
  return spawn;
  })
 
+(define game-loop #f)
+(define (start-game [number-of-minis 100])
+  (when game-loop
+     (kill-thread game-loop))
+  
+  (for ([i (in-range number-of-minis)])
+    (define s (unreal-eval-js (spawn (~a i))))
+    (unreal-eval-js (color s "green"))
+    s)
+    
+  (set! game-loop
+        (thread 
+         (thunk
+          (let loop ()
+            (displayln "Moving...")
+            (define to-move (with-name (~a (random number-of-minis))))
+            (unreal-eval-js (color to-move "orange"))
+            (unreal-eval-js 
+             (force to-move 
+                    (random -10000 10000)
+                    (random -10000 10000)
+                    (random -10000 10000)))
+            (sleep 0.1)
+            (unreal-eval-js (color to-move "green"))
+            (loop))))))
+
 (define (color spawn col)
-   @unreal-value{
+  @unreal-value{
  console.log("Color change")
  var spawn = @(->unreal-value spawn);
  if(!spawn){
-     console.log(Object.keys(global.namedThings))
-     console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
+  console.log(Object.keys(global.namedThings))
+  console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
  }
  spawn.ChangeColor(ParticleSystem.Load("/Game/Orbs/" + @(~s (string-titlecase col)) + "Orb"));
  return spawn;
+ })
+
+;(unreal-eval-js (radial-force (hash 'X 0 'Y 0 'Z 0)))
+(define (radial-force force-strength radius)
+  @unreal-value{
+ var r = new RadialForceActor(GWorld)
+
+ r.ForceComponent.ForceStrength = @(->unreal-value force-strength)
+ r.ForceComponent.Radius = @(->unreal-value radius)
+
+ return r
  })
 
 (define/contract (force spawn x y z)
@@ -88,8 +128,9 @@
   
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- spawn.AddForce({X:@x,Y:@y,Z:@z})
-
+ var scm = spawn.StaticMeshComponent
+ scm.AddImpulse({X:@x,Y:@y,Z:@z})
+ 
  return true
  })
 
@@ -100,21 +141,21 @@
  var spawn = @(->unreal-value spawn);
  var obj = @(with-name name);
  if(obj == undefined) return null
-
+ 
  var spawnCoords = spawn.GetActorLocation();
  var objCoords = obj.GetActorLocation();
  var vect = {X: (objCoords.X - spawnCoords.X),
-             Y: (objCoords.Y - spawnCoords.Y),
-             Z: (objCoords.Z - spawnCoords.Z)};
+  Y: (objCoords.Y - spawnCoords.Y),
+  Z: (objCoords.Z - spawnCoords.Z)};
  var magnitude = Math.sqrt(Math.pow(vect.X,2) +
-                           Math.pow(vect.Y,2) +
-                           Math.pow(vect.X,2))
-
+ Math.pow(vect.Y,2) +
+ Math.pow(vect.X,2))
+ 
  if(magnitude == 0) return null
-
+ 
  var vect2 = {X: (vect.X / magnitude) * @mag,
-              Y: (vect.Y / magnitude) * @mag,
-              Z: (vect.Z / magnitude) * @mag};
+  Y: (vect.Y / magnitude) * @mag,
+  Z: (vect.Z / magnitude) * @mag};
  spawn.AddForce(vect2);
  })
 
@@ -131,8 +172,8 @@
   (-> any/c unreal-value?)
   
   @unreal-value{
-var obj = @(->unreal-value obj);
-return obj.GetActorLocation();
+ var obj = @(->unreal-value obj);
+ return obj.GetActorLocation();
  })
 
 (define/contract (distance a b)
@@ -164,3 +205,23 @@ return obj.GetActorLocation();
   "red")
 (define orange
   "orange")
+
+(define (get-all-actors)
+  @unreal-value{
+    return GWorld.GetAllActorsOfClass(Actor).OutActors
+ })
+ 
+(define (camera)
+  @unreal-value{
+ return GWorld.GetAllActorsOfClass(CameraActor).OutActors[0]
+ })
+
+(define (set-location a l)
+  @unreal-value{
+ var a = @(->unreal-value a)
+ var l = @(->unreal-value l)
+ 
+ a.SetActorLocation(l) 
+
+ return a
+ })

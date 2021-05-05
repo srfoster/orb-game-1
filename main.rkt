@@ -11,10 +11,14 @@
 
 (define (bootstrap-and-start-unreal)
   (bootstrap-unreal-js  
-   (build-path here "Build\\WindowsNoEditor\\LogCabinWorld\\Content\\Scripts"))
+   (build-path here "Build\\WindowsNoEditor\\OrbGames\\Content\\Scripts")
+   ;(build-path here "Build\\WindowsNoEditor\\LogCabinWorld\\Content\\Scripts")
+   )
   
   (start-unreal 
-   (build-path here "Build\\WindowsNoEditor\\CodeSpellsDemoWorld.exe")))
+   (build-path here "Build\\WindowsNoEditor\\OrbGames.exe")
+   ;(build-path here "Build\\WindowsNoEditor\\CodeSpellsDemoWorld.exe")
+   ))
 
 (define (prep-for-chat-output v)
   (if (unreal-actor? v)
