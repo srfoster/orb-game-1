@@ -8,6 +8,7 @@
          anchor
          de-anchor
          locate
+         velocity
          with-name
          color
          let
@@ -15,7 +16,10 @@
          red
          blue
          orange
+         red-gate-location
+         blue-gate-location
 
+         radial-force
          start-game
          
          #%app
@@ -27,30 +31,15 @@
 (require unreal
          unreal/libs/names)
 
-(define (red-gate)
-  (->unreal-value
-   (hash 'id "RedGate"
-         'type "actor")))
+(define (red-gate-location)
+  (hash 'X 0
+        'Y 0
+        'Z -500))
 
-(define (blue-gate)
-  (->unreal-value
-   (hash 'id "BlueGate"
-         'type "actor")))
-
-(define (main-light)
-  (->unreal-value
-   (hash 'id "PointLight3_7"
-         'type "actor")))
-
-(define (red-light)
-  (->unreal-value
-   (hash 'id "PointLight_1"
-         'type "actor")))
-
-(define (blue-light)
-  (->unreal-value
-   (hash 'id "PointLight2_4"
-         'type "actor")))
+(define (blue-gate-location)
+  (hash 'X 0
+        'Y 0
+        'Z 500))
 
 ; (unreal-eval-js (spawn "Hello"))
 (define/contract (spawn twitch-id)
@@ -75,15 +64,19 @@
  })
 
 (define game-loop #f)
-(define (start-game [number-of-minis 100])
+(define number-of-minis #f)
+(define (start-game [n 100]
+                    [strength 1000])
   (when game-loop
-     (kill-thread game-loop))
+    (kill-thread game-loop))
+
+  (set! number-of-minis n)
   
   (for ([i (in-range number-of-minis)])
     (define s (unreal-eval-js (spawn (~a i))))
     (unreal-eval-js (color s "green"))
     s)
-    
+  
   (set! game-loop
         (thread 
          (thunk
@@ -93,12 +86,24 @@
             (unreal-eval-js (color to-move "orange"))
             (unreal-eval-js 
              (force to-move 
-                    (random -10000 10000)
-                    (random -10000 10000)
-                    (random -10000 10000)))
+                    (random (- strength) strength)
+                    (random (- strength) strength)
+                    (random (- strength) strength)))
             (sleep 0.1)
             (unreal-eval-js (color to-move "green"))
             (loop))))))
+
+#;
+(define (end-game)
+  (when game-loop
+    (kill-thread game-loop))
+
+  (for ([i (in-range number-of-minis)])
+    (unreal-eval-js (destroy-actor (with-name (~a i))))
+    s)
+
+
+  )
 
 (define (color spawn col)
   @unreal-value{
@@ -113,7 +118,7 @@
  })
 
 ;(unreal-eval-js (radial-force (hash 'X 0 'Y 0 'Z 0)))
-(define (radial-force force-strength radius)
+(define (radial-force radius force-strength )
   @unreal-value{
  var r = new RadialForceActor(GWorld)
 
@@ -168,13 +173,6 @@
  spawn.AddChild(obj);
  })
 
-(define/contract (locate obj)
-  (-> any/c unreal-value?)
-  
-  @unreal-value{
- var obj = @(->unreal-value obj);
- return obj.GetActorLocation();
- })
 
 (define/contract (distance a b)
   (-> hash? hash? number?)
@@ -216,6 +214,15 @@
  return GWorld.GetAllActorsOfClass(CameraActor).OutActors[0]
  })
 
+
+
+;;; TODO: move to unreal package
+
+(define (velocity a)
+  @unreal-value{
+    return @(->unreal-value a).GetVelocity()
+  })
+
 (define (set-location a l)
   @unreal-value{
  var a = @(->unreal-value a)
@@ -224,4 +231,12 @@
  a.SetActorLocation(l) 
 
  return a
+ })
+
+(define/contract (locate obj)
+  (-> any/c unreal-value?)
+  
+  @unreal-value{
+ var obj = @(->unreal-value obj);
+ return obj.GetActorLocation();
  })

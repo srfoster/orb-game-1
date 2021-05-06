@@ -40,6 +40,7 @@
 (dynamic-require 'orb-game-1/run-lang #f)
 (define (setup-ns)
   (displayln "Setting up run-lang namespace and ticker")
+
   (define main-ns (current-namespace))
   (when (not safe-ns)
     (set! safe-ns
@@ -57,11 +58,12 @@
            (thunk
             (let loop ()
               (map (lambda (k)
-                     ;(displayln (~a "  Ticking for: " k))
+                     (displayln (~a "  Ticking for: " k))
                      (define p (hash-ref current-programs k))
                      
                      (with-handlers
-                         ([exn:fail?
+                         ([exn? 
+
                            (lambda (e)
                              (if (program-stopped-working? e)
                                  (let ()
@@ -122,8 +124,9 @@
   
   
   (with-handlers
-      ([exn:fail? (lambda (e) (~a e))])
+      ([exn? (lambda (e) (~a e))])
     
+    (displayln (~a "Construction program generator for: " spawn-name))
     (define program
       (eval
        `(generator ()
@@ -131,6 +134,7 @@
                      (with-spawn ,(hash-ref current-spawns spawn-name)
                        ,code)))
        safe-ns))
+    (displayln (~a "Done constructing generator for: " spawn-name))
     
     (set! current-programs
           (hash-set current-programs

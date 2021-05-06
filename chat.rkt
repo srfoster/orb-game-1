@@ -12,7 +12,10 @@
          with-twitch-id
          𐑩𐑯
 
+         ;CodeSpells only
          start-game
+         add-radial-force
+
          errors
          help
          topic
@@ -25,6 +28,7 @@
          de-anchor
          anchor
          locate
+         velocity
          show-spell
          run
          (rename-out [unreal:red red]
@@ -128,6 +132,11 @@
     (unreal-eval-js
      (unreal:locate (unreal:with-name name)))))
 
+(define (velocity [name (current-twitch-id)])
+  (let ()
+    (unreal-eval-js
+     (unreal:velocity (unreal:with-name name)))))
+
 (define/contract (de-anchor)
   (-> string?)
 
@@ -182,9 +191,17 @@
 
   (map exn-message  (get-errors twitch-id)))
 
-(define (start-game)
+(define (start-game number-of-minis strength)
   (when (not (string=? "codespells" (current-twitch-id)))
     (error "Only codespells can start games"))
   
-  (unreal:start-game)
+  (unreal:start-game number-of-minis strength)
   "Game started")
+
+(define (add-radial-force radius force)
+  (when (not (string=? "codespells" (current-twitch-id)))
+    (error "Only codespells can start games"))
+  
+  (unreal-eval-js (unreal:radial-force radius force))
+
+  "Made a radial force")

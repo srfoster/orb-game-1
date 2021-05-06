@@ -18,12 +18,13 @@
  #%module-begin
  #%top-interaction
  #%datum
-
+ 
  force
  force-to
  anchor
  de-anchor
  locate
+ velocity
  random
  color
  
@@ -33,19 +34,25 @@
              [unreal:orange orange]
              [unreal:green green]
              [unreal:with-name with-name])
-
+ 
+ ;Syntax
  let
  define
  lambda
  if
  cond
+ else
  when
  match
  match-define
  quote
  quasiquote
  unquote
+ and 
+ or
  
+ ;Functions
+ not
  displayln
  equal?
  string=?
@@ -77,42 +84,65 @@
  list-ref
  min
  max
+ abs
+ add1
+ modulo
+ string->number
+ number->string
+ void?
+ 
+ ;Level functions
+ (rename-out [unreal:blue-gate-location blue-gate-location]
+             [unreal:red-gate-location red-gate-location])
+
  )
 
 (define white-list
-  (list displayln
-        equal?
-        string=?
-        eq?
-        >=
-        <=
-        =
-        <
-        >
-        +
-        -
-        *
-        /
-        round
-        hash
-        hash-ref
-        hash-keys
-        hash-values
-        hash-has-key?
-        positive?
-        negative?
-        list
-        shuffle
-        length
-        first
-        last
-        rest
-        list-ref
-        empty?
-        min
-        max
-        unreal:locate
-        unreal:distance))
+  (list 
+   unreal:blue-gate-location 
+   unreal:red-gate-location 
+   not
+   displayln
+   equal?
+   string=?
+   eq?
+   >=
+   <=
+   =
+   <
+   >
+   +
+   -
+   *
+   /
+   round
+   hash
+   hash-ref
+   hash-keys
+   hash-values
+   hash-has-key?
+   positive?
+   negative?
+   list
+   shuffle
+   length
+   first
+   last
+   rest
+   list-ref
+   empty?
+   min
+   max
+   abs
+   add1
+   modulo
+   string->number
+   number->string
+   void?
+
+   unreal:locate
+   unreal:velocity
+   unreal:distance))
 
 (define spawn (make-parameter #f))
 (define-syntax-rule (with-spawn m lines ...)
@@ -156,6 +186,10 @@
 (define (locate obj)
   (unreal-eval-js
    (unreal:locate obj)))
+
+(define (velocity obj)
+  (unreal-eval-js
+   (unreal:velocity obj)))
 
 (define (color col)
   (unreal-eval-js 
