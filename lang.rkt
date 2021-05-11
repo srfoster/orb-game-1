@@ -49,7 +49,7 @@
     @unreal-value{
  var Spawn = Root.ResolveClass('PickupMini');
  var spawn = new Spawn(GWorld,{X:0,Y:0,Z:0});
- spawn.ChangeName(@(->unreal-value twitch-id))
+ spawn.SetText(@(->unreal-value twitch-id))
  
  return spawn;
  })
@@ -113,7 +113,7 @@
   console.log(Object.keys(global.namedThings))
   console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
  }
- spawn.ChangeColor(ParticleSystem.Load("/Game/Orbs/" + @(~s (string-titlecase col)) + "Orb"));
+ spawn.SetParticles(ParticleSystem.Load("/MagicalOrbs/Colors/" + @(~s (string-titlecase col)) + "Orb"));
  return spawn;
  })
 
@@ -139,16 +139,23 @@
  return true
  })
 
-(define/contract (force-to spawn name mag)
-  (-> any/c string? number? unreal-value?)
+(define/contract (force-to spawn name-or-location mag)
+  (-> any/c (or/c string? hash?) number? unreal-value?)
   
+  (define unreal-location
+    (if (string? name-or-location)
+        @unreal-value{
+          var obj = @(with-name name-or-location);
+          if(obj == undefined) return null 
+          return obj.GetActorLocation();
+        }
+        (->unreal-value name-or-location)))
+
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- var obj = @(with-name name);
- if(obj == undefined) return null
- 
  var spawnCoords = spawn.GetActorLocation();
- var objCoords = obj.GetActorLocation();
+
+ var objCoords = @(->unreal-value unreal-location) 
  var vect = {X: (objCoords.X - spawnCoords.X),
   Y: (objCoords.Y - spawnCoords.Y),
   Z: (objCoords.Z - spawnCoords.Z)};
@@ -170,7 +177,7 @@
   @unreal-value{
  var spawn = @(->unreal-value spawn);
  var obj = @(with-name name);
- spawn.AddChild(obj);
+ spawn.AttachTo(obj);
  })
 
 
@@ -192,7 +199,7 @@
   
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- spawn.DetachChild();
+ spawn.DetachAll();
  })
 
 (define green

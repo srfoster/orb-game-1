@@ -5,7 +5,8 @@
          racket/generator
          racket/format
          racket/match
-         racket/list)
+         racket/list
+         racket/function)
 
 (provide 
  generator
@@ -78,6 +79,8 @@
  shuffle
  length
  first
+ second
+ third
  last
  rest
  empty?
@@ -94,10 +97,11 @@
  ;Level functions
  (rename-out [unreal:blue-gate-location blue-gate-location]
              [unreal:red-gate-location red-gate-location])
-
+ 
+ waste-mana
  )
 
-(define white-list
+(define (white-list)
   (list 
    unreal:blue-gate-location 
    unreal:red-gate-location 
@@ -127,6 +131,8 @@
    shuffle
    length
    first
+   second
+   third
    last
    rest
    list-ref
@@ -139,16 +145,41 @@
    string->number
    number->string
    void?
-
+   
    unreal:locate
    unreal:velocity
-   unreal:distance))
+   unreal:distance
+   
+   waste-mana))
+
+(define (mana-cost-list)
+  (hash waste-mana (lambda (m) m)
+        force (thunk* 10)
+        force-to (thunk* 10)))
+
+(define (waste-mana m)
+  ;Do nothing.  The mana-cost-list defines the cost of this noop
+  (void))
+
+(define manas (hash))
+
+(define (update-mana! s amount)
+  (set! manas (hash-update manas 
+                           s
+                           (curry + amount))))
+
+(define (set-mana! s amount)
+  (set! manas (hash-set manas s amount)))
 
 (define spawn (make-parameter #f))
 (define-syntax-rule (with-spawn m lines ...)
   (let ()
     (when (spawn)
       (error "You're not allowed to do that..."))
+
+    (when (not (hash-has-key? manas m))
+      (set-mana! m 100))
+
     (parameterize ([spawn m])
       lines ...)))
 
@@ -160,12 +191,27 @@
 (define-syntax-rule (my-#%app f args ...)
   (let ()
     ;(displayln (~a "    Calling " 'f))
-    (when (not (member f white-list))
+    (when (not (member f (white-list)))
       ;Special things can be free.
       ;But what if user redefines things like (random)?
       ;(displayln (~a "    Yielding " 'f))
       (yield 'f))
-    (#%app f args ...)))
+    
+    (define mana-cost-function
+      (hash-ref (mana-cost-list) f #f))
+    (when mana-cost-function
+      (define mana-cost 
+        (min 0 (- (#%app mana-cost-function args ...))))
+      
+      (when (< mana-cost 0)
+        (update-mana! (spawn) mana-cost)))
+    
+    (when (zero? (hash-ref manas (spawn)))
+      (color "black")
+      (raise-user-error (~a "Out of mana, cant run: " 'f)))
+
+    (#%app f args ...)
+    ))
 
 (define (force x y z)
   (unreal-eval-js ;Do something fancy with #%top?

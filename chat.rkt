@@ -51,10 +51,11 @@
 (define current-twitch-id (make-parameter #f))
 
 (define-syntax-rule (with-twitch-id id lines ...)
-  ;TODO: Fail if current twitch id already set.
-  ;  Security bug
-  (parameterize ([current-twitch-id id])
-    lines ...))
+  (begin
+    (when (current-twitch-id)
+       (raise-user-error "Twitch id already set."))
+    (parameterize ([current-twitch-id id])
+      lines ...)))
 
 (define (topic) topic) ;No real meaning yet.  Just makes help work
 

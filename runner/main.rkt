@@ -40,7 +40,7 @@
 (dynamic-require 'orb-game-1/run-lang #f)
 (define (setup-ns)
   (displayln "Setting up run-lang namespace and ticker")
-
+  
   (define main-ns (current-namespace))
   (when (not safe-ns)
     (set! safe-ns
@@ -63,7 +63,7 @@
                      
                      (with-handlers
                          ([exn? 
-
+                           
                            (lambda (e)
                              (if (program-stopped-working? e)
                                  (let ()
@@ -79,8 +79,7 @@
                                                       k
                                                       (lambda (es)
                                                         (cons e es)))))))])
-                       (p)
-                       ))
+                           (p)))
                    (hash-keys current-programs))
               
               ;(displayln "Ticked all programs.  Resting a bit.")
@@ -122,7 +121,6 @@
 (define (run-spell spawn-name code args)
   (setup-ns)
   
-  
   (with-handlers
       ([exn? (lambda (e) (~a e))])
     
@@ -140,7 +138,11 @@
           (hash-set current-programs
                     spawn-name 
                     program))
+
     (set! current-errors
           (hash-set current-errors
                     spawn-name
-                    '()))))
+                    '()))
+
+    ))
+
