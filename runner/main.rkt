@@ -10,7 +10,9 @@
          get-spell
          run-spell
          get-errors
-         seconds-between-ticks)
+         seconds-between-ticks
+         use-unsafe-ns ;Because I haven't figured out how to get the safe one to work after raco distribute
+         )
 
 
 (require racket/function
@@ -36,56 +38,80 @@
 (define (get-errors name)
   (hash-ref current-errors name '()))
 
-(define safe-ns #f)
-(dynamic-require 'orb-game-1/run-lang #f)
-(define (setup-ns)
-  (displayln "Setting up run-lang namespace and ticker")
+
+(define (handle-spell-error username e) 
+    (if (program-stopped-working? e)
+        (let ()
+          (displayln "The program stopped working! Kill it!")
+          (set! current-programs
+                (hash-remove current-programs
+                             username)))
+        (let ()
+          (displayln "Adding a new error now...")
+          (displayln e) 
+          (set! current-errors
+                (hash-update current-errors
+                             username
+                             (lambda (es)
+                               (cons e es))))))) 
+
+(define (tick-program username)
+  (displayln (~a "  Ticking for: " username))
+  (define program (hash-ref current-programs username))
   
+  (with-handlers
+      ([exn? (curry handle-spell-error username)])
+    ;User's program is implemented as a generator, so we 
+    ; call it as a function to tick it
+    (program)))
+
+(define safe-ns #f)
+;(dynamic-require 'orb-game-1/run-lang #f)
+(require racket/runtime-path)
+;Should really pass path in as a parameter, not hard coded
+(define-runtime-path run-lang.rkt "../run-lang.rkt")  
+(define (setup-ns)
   (define main-ns (current-namespace))
   (when (not safe-ns)
+    ;Ugh.  This namespace stuff doesn't work after raco exe/dist :(
     (set! safe-ns
-          (parameterize ([current-namespace
-                          (make-base-empty-namespace)])
-            (namespace-attach-module main-ns 'unreal (current-namespace))
-            (namespace-require
-             'orb-game-1/run-lang)
-            
-            (current-namespace))))
-  
+          (if (use-unsafe-ns)
+              (let () 
+                (dynamic-require 'orb-game-1/run-lang-external #f)
+                (module->namespace 'orb-game-1/run-lang-external)
+                )
+              (parameterize ([current-namespace
+                              (make-base-empty-namespace)])
+                (displayln "Attaching unreal")
+                (namespace-attach-module main-ns 'unreal (current-namespace))
+                (namespace-attach-module main-ns 'orb-game-1/lang (current-namespace))
+                
+                (displayln "Requiring run-lang")
+                (namespace-require
+                 ;  run-lang.rkt
+                 'orb-game-1/run-lang
+                 )
+                
+                (current-namespace)))))
+  )
+
+(define (setup-ticking-thread)
   (when (not runner)
     (set! runner
           (thread
            (thunk
-            (let loop ()
-              (map (lambda (k)
-                     (displayln (~a "  Ticking for: " k))
-                     (define p (hash-ref current-programs k))
-                     
-                     (with-handlers
-                         ([exn? 
-                           
-                           (lambda (e)
-                             (if (program-stopped-working? e)
-                                 (let ()
-                                   (displayln "The program stopped working! Kill it!")
-                                   (set! current-programs
-                                         (hash-remove current-programs
-                                                      k)))
-                                 (let ()
-                                   (displayln "Adding a new error now...")
-                                   (displayln e) 
-                                   (set! current-errors
-                                         (hash-update current-errors
-                                                      k
-                                                      (lambda (es)
-                                                        (cons e es)))))))])
-                           (p)))
-                   (hash-keys current-programs))
+            (let tick ()
+              (define usernames (hash-keys current-programs))
+              (for-each tick-program usernames)
               
               ;(displayln "Ticked all programs.  Resting a bit.")
               (sleep (seconds-between-ticks))
-              (loop))))))
-  
+              (tick)))))))
+
+(define (setup-ns-and-ticking-thread)
+  (displayln "Setting up run-lang namespace and ticker")
+  (setup-ns)  
+  (setup-ticking-thread)
   (displayln "run-lang and ticker setup complete"))
 
 (define (program-stopped-working? e)
@@ -117,12 +143,17 @@
   
   code)
 
-
+(define use-unsafe-ns (make-parameter #f))
 (define (run-spell spawn-name code args)
-  (setup-ns)
+  (setup-ns-and-ticking-thread)
+    
+  (set! current-errors
+        (hash-set current-errors
+                  spawn-name
+                  '()))
   
   (with-handlers
-      ([exn? (lambda (e) (~a e))])
+      ([exn? (curry handle-spell-error spawn-name)])
     
     (displayln (~a "Construction program generator for: " spawn-name))
     (define program
@@ -139,10 +170,6 @@
                     spawn-name 
                     program))
 
-    (set! current-errors
-          (hash-set current-errors
-                    spawn-name
-                    '()))
 
     ))
 

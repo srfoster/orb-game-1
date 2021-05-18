@@ -1,20 +1,12 @@
 #lang racket/base
-;taskkill" /T /IM "node" /F
-
-(provide bootstrap-and-start-unreal)
 
 (require twitch-bot
          unreal
-         racket/runtime-path)
+         racket/runtime-path
+         orb-game-1/lang)
+
 
 (define-runtime-path Build "Build")
-
-(define (bootstrap-and-start-unreal)
-  (bootstrap-unreal-js  
-   (build-path Build "WindowsNoEditor\\OrbGames\\Content\\Scripts"))
-  
-  (start-unreal 
-   (build-path Build "WindowsNoEditor\\OrbGames.exe")))
 
 (define (prep-for-chat-output v)
   (if (unreal-actor? v)
@@ -22,6 +14,7 @@
       v))
 
 (module+ main
+  #;
   (bootstrap-and-start-unreal)
 
 

@@ -2,6 +2,8 @@
 
 (provide spawn
          respawn
+         log!
+         logs
          distance
          force
          force-to
@@ -18,9 +20,12 @@
          orange
          red-gate-location
          blue-gate-location
-
+         orb-spawn-location
+         
          radial-force
          start-game
+
+         find-all-nearby
          
          #%app
          #%top
@@ -41,6 +46,12 @@
         'Y 0
         'Z 500))
 
+
+(define orb-spawn-location
+  (make-parameter (hash 'X 0 'Y 0 'Z 0)))
+
+(orb-spawn-location (hash 'X -420.0 'Y 2210.0 'Z 4973.177246))
+
 ; (unreal-eval-js (spawn "Hello"))
 (define/contract (spawn twitch-id)
   (-> string? unreal-value?)
@@ -48,7 +59,7 @@
   (define js
     @unreal-value{
  var Spawn = Root.ResolveClass('PickupMini');
- var spawn = new Spawn(GWorld,{X:0,Y:0,Z:0});
+ var spawn = new Spawn(GWorld, @(->unreal-value (orb-spawn-location)));
  spawn.SetText(@(->unreal-value twitch-id))
  
  return spawn;
@@ -59,7 +70,7 @@
 (define (respawn spawn)
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- spawn.SetActorLocation({X: 0, Y: 0, Z: 0});
+ spawn.SetActorLocation(@(->unreal-value (orb-spawn-location)));
  return spawn;
  })
 
@@ -171,12 +182,14 @@
  spawn.AddForce(vect2);
  })
 
-(define/contract (anchor spawn name)
-  (-> any/c string? unreal-value?)
+(define/contract (anchor spawn name-or-ref)
+  (-> any/c any/c unreal-value?)
   
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- var obj = @(with-name name);
+ var obj = @(if (string? name-or-ref) 
+                (with-name name-or-ref)
+                (->unreal-value name-or-ref));
  spawn.AttachTo(obj);
  })
 
@@ -193,6 +206,14 @@
   (sqrt (+ (sqr (- x1 x2))
            (sqr (- y1 y2))
            (sqr (- z1 z2)))))
+
+(define (find-all-nearby spawn)
+  @unreal-value{
+ var spawn = @(->unreal-value spawn);
+ var found = spawn.FindNearby().OutActors;
+ console.log("FOUND!!!! ", found);
+    return found; 
+  })
 
 (define/contract (de-anchor spawn)
   (-> any/c unreal-value?)
@@ -247,3 +268,30 @@
  var obj = @(->unreal-value obj);
  return obj.GetActorLocation();
  })
+
+(define current-logs (hash))
+
+
+(define (get-logs s)
+  (hash-ref current-logs s '()))
+
+(define (add-logs s l)
+  (define safe-take (lambda (l n)
+                       (if (>= (length l) n)
+                         (take l n)
+                         l)))
+
+  (set-logs! s (safe-take 
+                 (cons l (get-logs s))
+                 10)))
+
+(define (set-logs! s l)
+  (set! current-logs (hash-set current-logs s l)))
+
+;Takes a spawn (unreal actor)
+(define (log! s something)
+  (add-logs (hash-ref s 'id) something))
+
+;Takes a spawn (unreal actor)
+(define (logs s)
+  (get-logs (hash-ref s 'id)))

@@ -11,11 +11,11 @@
          #%datum
          with-twitch-id
          𐑩𐑯
-
+         
          ;CodeSpells only
          start-game
          add-radial-force
-
+         
          errors
          help
          topic
@@ -30,6 +30,7 @@
          locate
          velocity
          show-spell
+         logs
          run
          (rename-out [unreal:red red]
                      [unreal:blue blue]
@@ -53,7 +54,7 @@
 (define-syntax-rule (with-twitch-id id lines ...)
   (begin
     (when (current-twitch-id)
-       (raise-user-error "Twitch id already set."))
+      (raise-user-error "Twitch id already set."))
     (parameterize ([current-twitch-id id])
       lines ...)))
 
@@ -69,7 +70,7 @@
      @~a{OhMyDog spawn is a command you use to spawn your spawn into the world.  Try "!!spawn"}]
     [(equal? (list force) args)
      @~a{OhMyDog Force is a command you use to apply a.  Try "!!spawn"}]
- ))
+    ))
 
 
 (define (spawn)
@@ -88,7 +89,7 @@
       (between? -10000 10000)
       (between? -10000 10000)
       string?)
-
+  
   (if (not (get-spawn (current-twitch-id)))
       @~a{You don't have a spawn yet!}
       (let ()
@@ -101,7 +102,7 @@
   (-> string?
       (between? -10000 10000)
       string?)
-
+  
   (cond [(not (get-spawn (current-twitch-id)))
          @~a{You don't have a spawn yet!"}]
         [(string=? name (current-twitch-id))
@@ -116,7 +117,7 @@
 (define/contract (anchor name)
   (-> string?
       string?)
-
+  
   (cond [(not (get-spawn (current-twitch-id)))
          @~a{You don't have a spawn yet!}]
         [(string=? name (current-twitch-id))
@@ -140,7 +141,7 @@
 
 (define/contract (de-anchor)
   (-> string?)
-
+  
   (cond [(not (get-spawn (current-twitch-id)))
          @~a{You don't have a spawn yet!}]
         [else
@@ -152,7 +153,7 @@
 (define/contract (color col)
   (-> string?
       string?)
-
+  
   (if (not (get-spawn (current-twitch-id)))
       @~a{You don't have a spawn yet!"}
       (let ()
@@ -166,7 +167,7 @@
 (define/contract (run spell-id . args)
   (->* (integer?) #:rest (listof any/c) string?)
   (seconds-between-ticks 0)
-
+  
   (if (not (get-spawn (current-twitch-id)))
       @~a{You don't have a spawn yet!}
       (let ()
@@ -176,21 +177,24 @@
 
 (define/contract (show-spell spell-id)
   (-> integer? string?)
-
+  
   (if (not (get-spawn (current-twitch-id)))
       @~a{You don't have a spawn yet!}
       (let ()
         
         (define code
           (get-spell spell-id))
-
+        
         @~a{This is your code: @code})
       ))
 
 (define/contract (errors [twitch-id (current-twitch-id)])
   (-> list?)
-
+  
   (map exn-message  (get-errors twitch-id)))
+
+(define (logs)
+  (~v (unreal:logs (get-spawn (current-twitch-id)))))
 
 (define (start-game number-of-minis strength)
   (when (not (string=? "codespells" (current-twitch-id)))
