@@ -18,7 +18,8 @@
 (require racket/function
          racket/string
          racket/contract
-         racket/format)
+         racket/format
+         racket/list)
 
 ;Can't run programs unless you have a spawn.  A visualization of the "computer" running the programs.
 ;  TODO: Pivot to a better name than spawn.
@@ -42,13 +43,10 @@
 (define (handle-spell-error username e) 
     (if (program-stopped-working? e)
         (let ()
-          (displayln "The program stopped working! Kill it!")
           (set! current-programs
                 (hash-remove current-programs
                              username)))
         (let ()
-          (displayln "Adding a new error now...")
-          (displayln e) 
           (set! current-errors
                 (hash-update current-errors
                              username
@@ -56,7 +54,6 @@
                                (cons e es))))))) 
 
 (define (tick-program username)
-  (displayln (~a "  Ticking for: " username))
   (define program (hash-ref current-programs username))
   
   (with-handlers
@@ -101,10 +98,27 @@
           (thread
            (thunk
             (let tick ()
-              (define usernames (hash-keys current-programs))
-              (for-each tick-program usernames)
+              ;clear screen and move cursor home
+              (display "\033[2J\033[H") 
+              (for ([username (in-hash-keys current-programs)])
+                (display username)
+                (tick-program username))
               
-              ;(displayln "Ticked all programs.  Resting a bit.")
+              ;move cursor home
+              (display "\033[H")
+              
+              (for ([username (in-hash-keys current-errors)])
+                (when (not (empty? (get-errors username)))
+                  (define err-msg 
+                    (string-join 
+                     (string-split 
+                      (~a (last (get-errors username))) "\n")
+                     "\033[1E\033[40C"))
+                  (display 
+                   (~a "\033[40C" username " ERROR!\033[1E\033[40C" err-msg "\033[2E"))))
+              
+              (displayln "\033[H")
+
               (sleep (seconds-between-ticks))
               (tick)))))))
 
@@ -155,7 +169,6 @@
   (with-handlers
       ([exn? (curry handle-spell-error spawn-name)])
     
-    (displayln (~a "Construction program generator for: " spawn-name))
     (define program
       (eval
        `(generator ()
@@ -163,7 +176,6 @@
                      (with-spawn ,(hash-ref current-spawns spawn-name)
                        ,code)))
        safe-ns))
-    (displayln (~a "Done constructing generator for: " spawn-name))
     
     (set! current-programs
           (hash-set current-programs
