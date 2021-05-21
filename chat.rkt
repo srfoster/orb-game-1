@@ -12,6 +12,13 @@
          with-twitch-id
          𐑩𐑯
          
+         ;;Links
+         nexus
+         discord
+         twitter
+         fb
+         patreon
+
          ;CodeSpells only
          start-game
          add-radial-force
@@ -39,6 +46,19 @@
 
 (define (𐑩𐑯)
   "Nice Shavian, duddeeeeee~!")
+
+;;Links
+(define (nexus)
+  "http://nexus.codespells.org")
+(define (discord)
+  "https://discord.gg/prsZZnm")
+(define (twitter)
+  "https://twitter.com/codespells")
+(define (fb)
+  "https://www.facebook.com/codespells")
+(define (patreon)
+  "https://www.patreon.com/codespells")
+
 #|
 -First spawn: !!spawn, but not required (spawn if not spawned)
 -Respawn:     !!reset or !!respawn
