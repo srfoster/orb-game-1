@@ -241,28 +241,27 @@
   (when (not (f (my-mana) m))
     (raise-user-error (~a "Mana was not " (list f (my-mana) m)))))
 
+(define (print-status-line mana-cost code)
+  (display
+   (~a " Mana: " (round (current-mana (spawn))) " (" (if (< mana-cost -1) "" "+") (round (+ mana-cost 1)) ")\033[1E"
+       code "\033[2E")))
+
 (define-syntax-rule (my-#%app f args ...)
   (let step-loop ()
-    (displayln (~a "    STARTING " (~v '(f args ...))))
-    (displayln (~a "    Current mana " (current-mana (spawn))))
+    (define mana-cost-function
+      (hash-ref (mana-cost-list) f #f))
+    
+    (define mana-cost
+      (if (not mana-cost-function) 0
+          (min 0 (- (#%app mana-cost-function args ...)))))
+    
+    (print-status-line mana-cost (~v '(f args ...)))
     ;Special things can be free.
     ;  But usually, we yield (especially for user-defined functions)
     (when (not (member f (white-list)))
       ;When we yeild, a tick happens.  So regenerate mana here.
-      (displayln "    Yielding.  Not on whitelist.")
       (yield 'f)
-      (displayln (~a "    Regenerating " (mana-per-function-app)))
       (update-mana! (spawn) (mana-per-function-app)))
-    
-    ;We either yeilded or we didn't, either way, 
-    ;  we are now about to run a function, so we calculate its mana cost.
-    
-    (define mana-cost-function
-      (hash-ref (mana-cost-list) f #f))
-    
-    (define mana-cost 
-      (if (not mana-cost-function) 0
-          (min 0 (- (#%app mana-cost-function args ...)))))
     
     ;Detect if WILL be out of mana, loop if so... 
     ; Write some better unit tests!!
@@ -274,19 +273,12 @@
             #;(raise-user-error (~a "Out of mana, can't run: " 'f)))
           
           ;Loop back, so we can regenerate mana and try again
-          (displayln (~a "    End step, looping back. Have " 
-                         (current-mana (spawn))
-                         ", need "
-                         (- mana-cost)))
           (when (not (member f (white-list)))
             (step-loop)))
         (let ()
           (when (negative? mana-cost)
-            (displayln (~a "    Subtracting mana for " 'f ": " mana-cost))
-            (update-mana! (spawn) mana-cost)
-            (displayln (~a "    After subtraction mana: " (hash-ref manas (spawn)))))
+            (update-mana! (spawn) mana-cost))
           
-          (displayln (~a "    ENDING " (~v '(f args ...))))
           (#%app f args ...)))
     
     ))
