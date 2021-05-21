@@ -1,13 +1,15 @@
 #lang racket/base
 ;taskkill" /T /IM "node" /F
 
-(provide bootstrap-and-start-unreal)
+(provide bootstrap-and-start-unreal
+         bootstrap-and-start-unreal-voxels)
 
 (require twitch-bot
          unreal
          racket/runtime-path)
 
 (define-runtime-path Build "Build")
+(define-runtime-path BuildVoxels "BuildVoxels")
 
 (define (bootstrap-and-start-unreal)
   (bootstrap-unreal-js  
@@ -15,6 +17,13 @@
   
   (start-unreal 
    (build-path Build "WindowsNoEditor\\OrbGames.exe")))
+
+(define (bootstrap-and-start-unreal-voxels)
+  (bootstrap-unreal-js  
+   (build-path BuildVoxels "WindowsNoEditor\\Voxels\\Content\\Scripts"))
+  
+  (start-unreal 
+   (build-path BuildVoxels "WindowsNoEditor\\Voxels.exe")))
 
 (define (prep-for-chat-output v)
   (if (unreal-actor? v)

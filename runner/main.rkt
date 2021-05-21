@@ -129,7 +129,7 @@
   
   (define res
     (get
-     (~a "https://guarded-mesa-01320.herokuapp.com/secret/"
+     (~a "http://nexus.codespells.org:8080/secret/"
          id)))
   (define payload
     (response-json res))

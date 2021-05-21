@@ -116,7 +116,26 @@
 
   )
 
+; col = red, green, blue, orange OR hex-value
 (define (color spawn col)
+  (define (hex->vec c)
+    (define rs (substring c 1 3))
+    (define gs (substring c 3 5))
+    (define bs (substring c 5 7))
+    (define r (read (open-input-string (~a "#x" rs))))
+    (define g (read (open-input-string (~a "#x" gs))))
+    (define b (read (open-input-string (~a "#x" bs))))
+    (define r-dec (/ r 256))
+    (define g-dec (/ g 256))
+    (define b-dec (/ b 256))
+    (hash 'X r-dec 'Y g-dec 'Z b-dec))
+  (define color-vec 
+    (match col
+      ["green" (hash 'X 0 'Y 1 'Z 0)]
+      ["blue" (hash 'X 0 'Y 0 'Z 1)]
+      ["red" (hash 'X 1 'Y 0 'Z 0)]
+      ["orange" (hash 'X 1 'Y 0.5 'Z 0)]
+      [else (hex->vec col)]))
   @unreal-value{
  console.log("Color change")
  var spawn = @(->unreal-value spawn);
@@ -124,7 +143,7 @@
   console.log(Object.keys(global.namedThings))
   console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
  }
- spawn.SetParticles(ParticleSystem.Load("/MagicalOrbs/Colors/" + @(~s (string-titlecase col)) + "Orb"));
+ spawn.ChangeColor(@(->unreal-value color-vec));
  return spawn;
  })
 
@@ -270,7 +289,6 @@
  })
 
 (define current-logs (hash))
-
 
 (define (get-logs s)
   (hash-ref current-logs s '()))

@@ -22,11 +22,11 @@
   '())
 
 (run-spell "test2"
-  '(let loop ()
-    (color "red")
-    (color "blue")
-    (loop))
-  '())
+           '(let loop ()
+              (color "red")
+              (color "blue")
+              (loop))
+           '())
 
 
 (sleep 10000)

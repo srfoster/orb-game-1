@@ -16,6 +16,7 @@
 
  displayln
  with-spawn
+ self
  with-args
  args
  (rename-out [my-#%app #%app])
@@ -92,7 +93,8 @@
  list-ref
  filter 
  findf
-
+ foldl
+ apply
  min
  max
  abs
@@ -157,6 +159,8 @@
    list-ref
    filter
    findf
+   foldl
+   apply
    empty?
    list?
    min
@@ -168,9 +172,10 @@
    number->string
    void?
    
+   
    unreal:distance
    log!
-
+   self
    locate
    velocity
    find-all-nearby 
@@ -218,6 +223,9 @@
     
     (parameterize ([spawn m])
       lines ...)))
+
+(define (self)
+  (spawn))
 
 (define args (make-parameter #f))
 (define-syntax-rule (with-args a lines ...)
