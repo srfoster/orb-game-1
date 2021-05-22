@@ -148,6 +148,7 @@
    negative?
    list
    shuffle
+   random
    length
    first
    second
