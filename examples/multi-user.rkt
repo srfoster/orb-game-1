@@ -22,6 +22,9 @@
 (with-twitch-id "woogachaka"
   (spawn))
 
+(with-twitch-id "jesscxc"
+  (spawn))
+
 
 (with-twitch-id "stephenrfoster"
   (run 75))
@@ -36,6 +39,9 @@
   (run 75))
 
 (with-twitch-id "laurond"
+  (run 75))
+
+(with-twitch-id "jesscxc"
   (run 75))
 
 (sleep 10000)
