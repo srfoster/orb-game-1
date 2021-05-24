@@ -89,14 +89,14 @@
     s)
   
   (set! game-loop
-        (thread 
+        (thread
          (thunk
           (let loop ()
             (displayln "Moving...")
             (define to-move (with-name (~a (random number-of-minis))))
             (unreal-eval-js (color to-move "orange"))
-            (unreal-eval-js 
-             (force to-move 
+            (unreal-eval-js
+             (force to-move
                     (random (- strength) strength)
                     (random (- strength) strength)
                     (random (- strength) strength)))
@@ -157,7 +157,7 @@
     (if (string? name-or-location)
         @unreal-value{
           var obj = @(with-name name-or-location);
-          if(obj == undefined) return null 
+          if(obj == undefined) return null
           return obj.GetActorLocation();
         }
         (->unreal-value name-or-location)))
@@ -166,7 +166,7 @@
  var spawn = @(->unreal-value spawn);
  var spawnCoords = spawn.GetActorLocation();
 
- var objCoords = @(->unreal-value unreal-location) 
+ var objCoords = @(->unreal-value unreal-location)
  var vect = {X: (objCoords.X - spawnCoords.X),
   Y: (objCoords.Y - spawnCoords.Y),
   Z: (objCoords.Z - spawnCoords.Z)};
@@ -187,7 +187,7 @@
   
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- var obj = @(if (string? name-or-ref) 
+ var obj = @(if (string? name-or-ref)
                 (with-name name-or-ref)
                 (->unreal-value name-or-ref));
  spawn.AttachTo(obj);
@@ -212,7 +212,7 @@
  var spawn = @(->unreal-value spawn);
  var found = spawn.FindNearby().OutActors;
  console.log("FOUND!!!! ", found);
-    return found; 
+    return found;
   })
 
 (define/contract (de-anchor spawn)
@@ -255,8 +255,8 @@
   @unreal-value{
  var a = @(->unreal-value a)
  var l = @(->unreal-value l)
- 
- a.SetActorLocation(l) 
+
+ a.SetActorLocation(l)
 
  return a
  })
@@ -271,7 +271,6 @@
 
 (define current-logs (hash))
 
-
 (define (get-logs s)
   (hash-ref current-logs s '()))
 
@@ -281,7 +280,7 @@
                          (take l n)
                          l)))
 
-  (set-logs! s (safe-take 
+  (set-logs! s (safe-take
                  (cons l (get-logs s))
                  10)))
 

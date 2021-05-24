@@ -1,6 +1,6 @@
 #lang at-exp racket/base
 
-(require 
+(require
   unreal
   unreal/libs/actors
   orb-game-1
@@ -13,7 +13,7 @@
 
 (define behavior-list '(75 76))
 
-(define character 
+(define character
   (unreal-eval-js (find-actor ".*OrbCharacter.*")))
 
 (define (r)
@@ -29,13 +29,13 @@
  })
 
 (let loop ()
-  (define character-location 
+  (define character-location
     (unreal-eval-js (locate character)))
   
   (define loc
     (hash 'X (+ (r) (hash-ref character-location 'X))
           'Y (+ (r) (hash-ref character-location 'Y))
-          'Z (+ (r) (hash-ref character-location 'Z))))  
+          'Z (+ (r) (hash-ref character-location 'Z))))
   
   (define other (unreal-eval-js (spawn-other-orb loc)))
   

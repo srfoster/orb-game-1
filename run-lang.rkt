@@ -11,7 +11,7 @@
 
 ;Anything provided out of here is useable in spells.
 ;  Use caution!
-(provide 
+(provide
  generator
 
  displayln
@@ -55,7 +55,7 @@
  quote
  quasiquote
  unquote
- and 
+ and
  or
  
  ;Functions
@@ -92,9 +92,9 @@
  empty?
  list?
  list-ref
- filter 
+ filter
  findf
-
+ 
  min
  max
  abs
@@ -123,9 +123,9 @@
 
 (define (white-list)
   ;These are free functions.  They should not cost mana and do not cost a tick
-  (list 
-   unreal:blue-gate-location 
-   unreal:red-gate-location 
+  (list
+   unreal:blue-gate-location
+   unreal:red-gate-location
    not
    equal?
    string=?
@@ -172,20 +172,21 @@
    
    unreal:distance
    log!
-
+   
    locate
    velocity
-   find-all-nearby 
+   find-all-nearby
    
    my-mana
-   assert-mana))
+   assert-mana
+   ))
 
 
 (define (mana-cost-list)
   (hash waste-mana (lambda (m) m)
         force      (lambda (x y z)
-                     (define m 
-                       (sqrt (+ (* x x) (* y y) (* z z)))) 
+                     (define m
+                       (sqrt (+ (* x x) (* y y) (* z z))))
                      (/ m 20))
         force-to   (lambda (n f) (/ f 20))
         anchor     (thunk* 10)
@@ -199,7 +200,7 @@
 (define manas (hash))
 
 (define (update-mana! s amount)
-  (set! manas (hash-update manas 
+  (set! manas (hash-update manas
                            s
                            (curry + amount)))
   (when (< (hash-ref manas s) 0)
@@ -267,11 +268,11 @@
       (yield 'f)
       (update-mana! (spawn) (mana-per-function-app)))
     
-    ;Detect if WILL be out of mana, loop if so... 
+    ;Detect if WILL be out of mana, loop if so...
     ; Write some better unit tests!!
     
-    (if (< (+ mana-cost (current-mana (spawn))) 0) 
-        (let () 
+    (if (< (+ mana-cost (current-mana (spawn))) 0)
+        (let ()
           (when (out-of-mana? (spawn))
             (color "black")
             #;(raise-user-error (~a "Out of mana, can't run: " 'f)))
@@ -316,7 +317,7 @@
    (unreal:velocity obj)))
 
 (define (color col)
-  (unreal-eval-js 
+  (unreal-eval-js
    (unreal:color (spawn) col)))
 
 (define (log! something)

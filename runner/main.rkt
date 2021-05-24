@@ -1,4 +1,3 @@
-
 #lang racket/base
 
 ;Trying to factor out the runtime into something we could
@@ -14,7 +13,6 @@
          use-unsafe-ns ;Because I haven't figured out how to get the safe one to work after raco distribute
          )
 
-
 (require racket/function
          racket/string
          racket/contract
@@ -23,7 +21,7 @@
 
 ;Can't run programs unless you have a spawn.  A visualization of the "computer" running the programs.
 ;  TODO: Pivot to a better name than spawn.
-(define current-spawns (hash))      
+(define current-spawns (hash))
 (define current-programs (hash))
 (define current-errors (hash))
 
@@ -39,8 +37,7 @@
 (define (get-errors name)
   (hash-ref current-errors name '()))
 
-
-(define (handle-spell-error username e) 
+(define (handle-spell-error username e)
     (if (program-stopped-working? e)
         (let ()
           (set! current-programs
@@ -51,14 +48,14 @@
                 (hash-update current-errors
                              username
                              (lambda (es)
-                               (cons e es))))))) 
+                               (cons e es)))))))
 
 (define (tick-program username)
   (define program (hash-ref current-programs username))
   
   (with-handlers
       ([exn? (curry handle-spell-error username)])
-    ;User's program is implemented as a generator, so we 
+    ;User's program is implemented as a generator, so we
     ; call it as a function to tick it
     (program)))
 
@@ -66,7 +63,7 @@
 ;(dynamic-require 'orb-game-1/run-lang #f)
 (require racket/runtime-path)
 ;Should really pass path in as a parameter, not hard coded
-(define-runtime-path run-lang.rkt "../run-lang.rkt")  
+(define-runtime-path run-lang.rkt "../run-lang.rkt")
 (define (setup-ns)
   (define main-ns (current-namespace))
   (when (not safe-ns)
@@ -99,7 +96,7 @@
            (thunk
             (let tick ()
               ;clear screen and move cursor home
-              (display "\033[2J\033[H") 
+              (display "\033[2J\033[H")
               (for ([username (in-hash-keys current-programs)])
                 (display username)
                 (tick-program username))
@@ -109,12 +106,12 @@
               
               (for ([username (in-hash-keys current-errors)])
                 (when (not (empty? (get-errors username)))
-                  (define err-msg 
-                    (string-join 
-                     (string-split 
+                  (define err-msg
+                    (string-join
+                     (string-split
                       (~a (last (get-errors username))) "\n")
                      "\033[1E\033[40C"))
-                  (display 
+                  (display
                    (~a "\033[40C" username " ERROR!\033[1E\033[40C" err-msg "\033[2E"))))
               
               (displayln "\033[H")
@@ -179,9 +176,6 @@
     
     (set! current-programs
           (hash-set current-programs
-                    spawn-name 
+                    spawn-name
                     program))
-
-
     ))
-

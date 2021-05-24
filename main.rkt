@@ -10,10 +10,10 @@
 (define-runtime-path Build "Build")
 
 (define (bootstrap-and-start-unreal)
-  (bootstrap-unreal-js  
+  (bootstrap-unreal-js
    (build-path Build "WindowsNoEditor\\OrbGames\\Content\\Scripts"))
   
-  (start-unreal 
+  (start-unreal
    (build-path Build "WindowsNoEditor\\OrbGames.exe")))
 
 (define (prep-for-chat-output v)
@@ -24,10 +24,9 @@
 (module+ main
   (bootstrap-and-start-unreal)
 
-
-  (define e 
+  (define e
     (make-safe-evaluator 'orb-game-1/chat))
-  
+
   (start-twitch-bot
    (handle-twitch-message
     (lambda (expr)

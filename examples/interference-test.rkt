@@ -1,6 +1,6 @@
 #lang at-exp racket/base
 
-(require 
+(require
   unreal
   orb-game-1
   orb-game-1/chat
@@ -17,7 +17,7 @@
 ;Throwing an error should not interrupt other user's spells
 (run-spell "test1"
   '(let loop ()
-    (locate (with-name "adasdfaf"))   
+    (locate (with-name "adasdfaf"))
     (loop))
   '())
 
