@@ -18,6 +18,8 @@
  with-spawn
  with-args
  args
+; .meta .jesscxc uncomment `inputs` (syntax transformer for `inputs` >>> `args`) (then del this message)
+; inputs
  (rename-out [my-#%app #%app])
  #%top
  #%module-begin
@@ -223,6 +225,8 @@
 (define-syntax-rule (with-args a lines ...)
   (parameterize ([args a])
     lines ...))
+; .meta .jesscxc uncomment to add syntax transformer for `inputs` >>> `args` (then del this message)
+; (define-syntax inputs (make-rename-transformer #'args))
 
 (define (out-of-mana? s)
   (<= (current-mana s) 0))
