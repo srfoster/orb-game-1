@@ -2,6 +2,7 @@
 
 (provide spawn
          respawn
+         is-dead?
          log!
          logs
          distance
@@ -230,8 +231,13 @@
   @unreal-value{
  var spawn = @(->unreal-value spawn);
  var found = spawn.FindNearby().OutActors;
- console.log("FOUND!!!! ", found);
     return found; 
+  })
+
+(define (is-dead? a)
+  @unreal-value{
+ var spawn = @(->unreal-value a);
+    return !spawn
   })
 
 (define/contract (de-anchor spawn)

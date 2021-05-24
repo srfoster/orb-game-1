@@ -4,10 +4,10 @@
          orb-game-1/runner/main
          racket/list)
 
+
 ;for each behavior, first in list is the spell id, followed by arguments
-(define behavior-id-list '([198 200] 
-                           [202]
-                           #;[204 300 "#21FF02"]))
+(define behavior-id-list '([209]
+                           [198]))
 
 (displayln "Fetching behaviors from nexus")
 (define behavior-list (map (lambda (id-and-args) 

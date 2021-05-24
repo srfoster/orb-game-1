@@ -39,7 +39,6 @@
 (define (get-errors name)
   (hash-ref current-errors name '()))
 
-
 (define (handle-spell-error username e) 
     (if (program-stopped-working? e)
         (let ()
