@@ -20,7 +20,10 @@
  with-spawn
  self
  with-args
+ 
  args
+ inputs
+ 
  (rename-out [my-#%app #%app])
  #%top
  #%module-begin
@@ -324,6 +327,11 @@
 (define-syntax-rule (with-args a lines ...)
   (parameterize ([args a])
     lines ...))
+    
+(define-syntax inputs (make-rename-transformer #'args))
+
+(define (has-mana? s)
+  (hash-has-key? manas (get-id-if-actor s)))
 
 (define (has-mana? s)
   (hash-has-key? manas (get-id-if-actor s)))

@@ -7,11 +7,11 @@
 
 (define-runtime-path here ".")
 
-(bootstrap-unreal-js  
+(bootstrap-unreal-js
  (build-path here "Build\\WindowsNoEditor\\LogCabinWorld\\Content\\Scripts")
  )
 
-(start-unreal 
+(start-unreal
  (build-path here "Build\\WindowsNoEditor\\CodeSpellsDemoWorld.exe"))
 
 (define (red-gate)
@@ -109,8 +109,6 @@
       (first (shuffle
               '("red" "blue")))))
 
-
-    
     (displayln (~a "tick: " count))
     (set! count (add1 count))
     (sleep rate)
@@ -124,7 +122,6 @@
  })
 
 (define (force-to spawn target mag)
-
   @unreal-value{
  var spawn = @(->unreal-value spawn);
  var obj = @(->unreal-value target);

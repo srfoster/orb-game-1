@@ -1,6 +1,6 @@
 #lang at-exp racket/base
 
-(require 
+(require
   unreal
   orb-game-1
   orb-game-1/chat
@@ -23,8 +23,8 @@
 
 (sleep 1)
 
-(displayln 
- (with-twitch-id "test1" 
+(displayln
+ (with-twitch-id "test1"
    (logs)))
 
 (sleep 10000)
