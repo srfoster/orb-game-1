@@ -92,17 +92,16 @@
      @~a{OhMyDog Force is a command you use to apply a.  Try "!!spawn"}]
     ))
 
-
 (define (spawn)
   (if (get-spawn (current-twitch-id))
       (let ()
         (unreal-eval-js (unreal:respawn (get-spawn (current-twitch-id))))
-        @~a{Respawning...!"})
+        @~a{Respawning...!})
       (let ()
         (define spawned
           (unreal-eval-js (unreal:spawn (current-twitch-id))))
         (add-spawn! (current-twitch-id) spawned)
-        @~a{You spawned a spawn!"})))
+        @~a{You spawned a spawn!})))
 
 (define/contract (force x y z)
   (-> (between? -10000 10000)

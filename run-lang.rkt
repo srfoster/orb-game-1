@@ -332,6 +332,9 @@
 (define (has-mana? s)
   (hash-has-key? manas (get-id-if-actor s)))
 
+(define (has-mana? s)
+  (hash-has-key? manas (get-id-if-actor s)))
+
 (define (out-of-mana? s)
   (<= (current-mana s) 0))
 
