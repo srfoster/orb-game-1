@@ -1,6 +1,8 @@
 #lang racket/base
 
 (require unreal
+         unreal/libs/basic-types
+         unreal/libs/actors
          (prefix-in unreal: orb-game-1/lang)
          racket/generator
          racket/format
@@ -11,11 +13,12 @@
 
 ;Anything provided out of here is useable in spells.
 ;  Use caution!
-(provide
+(provide 
  generator
-
+ 
  displayln
  with-spawn
+ self
  with-args
  args
 ; .meta .jesscxc uncomment `inputs` (syntax transformer for `inputs` >>> `args`) (then del this message)
@@ -26,6 +29,8 @@
  #%top-interaction
  #%datum
  
+ split 
+ eat
  force
  force-to
  anchor
@@ -43,6 +48,7 @@
              [unreal:with-name with-name])
  
  ;Syntax
+ set!
  let
  define
  lambda
@@ -55,7 +61,7 @@
  quote
  quasiquote
  unquote
- and
+ and 
  or
  
  ;Functions
@@ -92,9 +98,11 @@
  empty?
  list?
  list-ref
- filter
+ filter 
+ map
  findf
- 
+ foldl
+ apply
  min
  max
  abs
@@ -103,6 +111,9 @@
  string->number
  number->string
  void?
+ +vec
+ vec
+ *vec
  
  ;Level functions
  (rename-out [unreal:blue-gate-location blue-gate-location]
@@ -116,6 +127,7 @@
  assert-mana
  
  log!
+ wait-for-ticks
  )
 
 (define starting-mana (make-parameter 10000))
@@ -123,9 +135,9 @@
 
 (define (white-list)
   ;These are free functions.  They should not cost mana and do not cost a tick
-  (list
-   unreal:blue-gate-location
-   unreal:red-gate-location
+  (list 
+   unreal:blue-gate-location 
+   unreal:red-gate-location 
    not
    equal?
    string=?
@@ -150,6 +162,7 @@
    negative?
    list
    shuffle
+   random
    length
    first
    second
@@ -158,7 +171,10 @@
    rest
    list-ref
    filter
+   map
    findf
+   foldl
+   apply
    empty?
    list?
    min
@@ -170,23 +186,33 @@
    number->string
    void?
    
+   split
+   eat
    unreal:distance
    log!
-   
+   self
    locate
    velocity
-   find-all-nearby
+   find-all-nearby 
+   
+   +vec
+   vec
+   *vec
    
    my-mana
    assert-mana
+   
+   wait-for-ticks
    ))
 
 
 (define (mana-cost-list)
-  (hash waste-mana (lambda (m) m)
+  (hash split (lambda (m [dummy1 #f] [dummy2 #f]) m)
+        eat   (lambda (target mana) mana)
+        waste-mana (lambda (m) m)
         force      (lambda (x y z)
-                     (define m
-                       (sqrt (+ (* x x) (* y y) (* z z))))
+                     (define m 
+                       (sqrt (+ (* x x) (* y y) (* z z)))) 
                      (/ m 20))
         force-to   (lambda (n f) (/ f 20))
         anchor     (thunk* 10)
@@ -199,15 +225,25 @@
 
 (define manas (hash))
 
+(define (get-id-if-actor s)
+  (if (hash? s)
+      (let ()
+        (when (not (hash-has-key? s 'id))
+            (raise-user-error "Can't get-id-if-actor of a hash that isn't an actor" s))
+        (hash-ref s 'id))
+      s))
+
 (define (update-mana! s amount)
-  (set! manas (hash-update manas
-                           s
+  (define id (get-id-if-actor s))
+  (set! manas (hash-update manas 
+                           id
                            (curry + amount)))
-  (when (< (hash-ref manas s) 0)
-    (set! manas (hash-set manas s 0))))
+  (when (< (hash-ref manas id) 0)
+    (set! manas (hash-set manas id 0))))
 
 (define (set-mana! s amount)
-  (set! manas (hash-set manas s amount)))
+  (define i (get-id-if-actor s))
+  (set! manas (hash-set manas i amount)))
 
 
 (define spawn (make-parameter #f))
@@ -216,11 +252,75 @@
     (when (spawn)
       (error "You're not allowed to do that..."))
     
-    (when (not (hash-has-key? manas m))
+    (when (not (hash-has-key? manas (get-id-if-actor m)))
       (set-mana! m (starting-mana)))
     
     (parameterize ([spawn m])
       lines ...)))
+
+; ORB MITOSIS 
+; Takes amount of mana and code for the new baby orb. Mana is removed
+; from momma orb.
+(define (split mana 
+               [code '(let () "Do nothing")] 
+               [args '()])
+  (define add-spawn!
+    (dynamic-require 'orb-game-1/runner/main 
+                     'add-spawn!))
+  (define run-spell
+    (dynamic-require 'orb-game-1/runner/main 
+                     'run-spell))
+  (define child-name
+    ;Need to fix this! We will likely end up with
+    ; naming collisions :(
+    (~a "child" (random 10000)))
+  (define ran-distance 50)
+  (define spawned
+    (unreal-eval-js 
+     (parameterize ([unreal:orb-spawn-location 
+                     (+vec (vec (random (- ran-distance) ran-distance) 
+                                (random (- ran-distance) ran-distance) 
+                                (random (- ran-distance) ran-distance)) 
+                           (locate (self)))]) 
+       (unreal:spawn child-name))))
+  (add-spawn! child-name spawned)
+  (parameterize ([starting-mana mana]) 
+    (run-spell child-name code args)) 
+  
+  spawned)
+
+(define (can-eat? a b)
+  (and
+   (has-mana? a)  
+   (has-mana? b)
+   (not (equal? (get-id-if-actor a)
+                (get-id-if-actor b)))))
+
+(define (current-code-for s)
+  '(todo))
+
+(define (eat target mana)
+  (when (can-eat? (self) target)
+    (define consumed-mana (current-mana target))
+    (displayln (~a "Gonna eat: " consumed-mana))
+    
+    ;Subtract mana from other (maybe killing it) 
+    
+    (update-mana! target (- mana))
+    (when #t #;(<= (current-mana target) 0)
+      (unreal-eval-js (destroy-actor target))) 
+    
+    ;Add back lost mana from (eat mana ...)
+    (update-mana! (self) mana)
+    
+    ;Add in mana from target
+    (update-mana! (self) consumed-mana)
+    
+    ;Return code and args...
+    (current-code-for target)))
+
+(define (self)
+  (spawn))
 
 (define args (make-parameter #f))
 (define-syntax-rule (with-args a lines ...)
@@ -229,11 +329,14 @@
 ; .meta .jesscxc uncomment to add syntax transformer for `inputs` >>> `args` (then del this message)
 ; (define-syntax inputs (make-rename-transformer #'args))
 
+(define (has-mana? s)
+  (hash-has-key? manas (get-id-if-actor s)))
+
 (define (out-of-mana? s)
   (<= (current-mana s) 0))
 
 (define (current-mana s)
-  (hash-ref manas s))
+  (hash-ref manas (get-id-if-actor s)))
 
 (define (wait-for-ticks n)
   (for ([i (in-range 0 n)])
@@ -266,13 +369,16 @@
     (when (not (member f (white-list)))
       ;When we yeild, a tick happens.  So regenerate mana here.
       (yield 'f)
+      (when (is-dead? (spawn))
+        (raise-user-error "Spell target has died.  Stopping."))
+
       (update-mana! (spawn) (mana-per-function-app)))
     
-    ;Detect if WILL be out of mana, loop if so...
+    ;Detect if WILL be out of mana, loop if so... 
     ; Write some better unit tests!!
     
-    (if (< (+ mana-cost (current-mana (spawn))) 0)
-        (let ()
+    (if (< (+ mana-cost (current-mana (spawn))) 0) 
+        (let () 
           (when (out-of-mana? (spawn))
             (color "black")
             #;(raise-user-error (~a "Out of mana, can't run: " 'f)))
@@ -317,8 +423,12 @@
    (unreal:velocity obj)))
 
 (define (color col)
-  (unreal-eval-js
+  (unreal-eval-js 
    (unreal:color (spawn) col)))
+
+(define (is-dead? x)
+  (unreal-eval-js 
+   (unreal:is-dead? x)))
 
 (define (log! something)
   (unreal:log! (spawn) something))

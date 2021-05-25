@@ -2,6 +2,7 @@
 
 (provide spawn
          respawn
+         is-dead?
          log!
          logs
          distance
@@ -89,14 +90,14 @@
     s)
   
   (set! game-loop
-        (thread
+        (thread 
          (thunk
           (let loop ()
             (displayln "Moving...")
             (define to-move (with-name (~a (random number-of-minis))))
             (unreal-eval-js (color to-move "orange"))
-            (unreal-eval-js
-             (force to-move
+            (unreal-eval-js 
+             (force to-move 
                     (random (- strength) strength)
                     (random (- strength) strength)
                     (random (- strength) strength)))
@@ -116,7 +117,26 @@
 
   )
 
+; col = red, green, blue, orange OR hex-value
 (define (color spawn col)
+  (define (hex->vec c)
+    (define rs (substring c 1 3))
+    (define gs (substring c 3 5))
+    (define bs (substring c 5 7))
+    (define r (read (open-input-string (~a "#x" rs))))
+    (define g (read (open-input-string (~a "#x" gs))))
+    (define b (read (open-input-string (~a "#x" bs))))
+    (define r-dec (/ r 256))
+    (define g-dec (/ g 256))
+    (define b-dec (/ b 256))
+    (hash 'X r-dec 'Y g-dec 'Z b-dec))
+  (define color-vec 
+    (match col
+      ["green" (hash 'X 0 'Y 1 'Z 0)]
+      ["blue" (hash 'X 0 'Y 0 'Z 1)]
+      ["red" (hash 'X 1 'Y 0 'Z 0)]
+      ["orange" (hash 'X 1 'Y 0.5 'Z 0)]
+      [else (hex->vec col)]))
   @unreal-value{
  console.log("Color change")
  var spawn = @(->unreal-value spawn);
@@ -124,7 +144,7 @@
   console.log(Object.keys(global.namedThings))
   console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
  }
- spawn.SetParticles(ParticleSystem.Load("/MagicalOrbs/Colors/" + @(~s (string-titlecase col)) + "Orb"));
+ spawn.ChangeColor(@(->unreal-value color-vec));
  return spawn;
  })
 
@@ -157,7 +177,7 @@
     (if (string? name-or-location)
         @unreal-value{
           var obj = @(with-name name-or-location);
-          if(obj == undefined) return null
+          if(obj == undefined) return null 
           return obj.GetActorLocation();
         }
         (->unreal-value name-or-location)))
@@ -166,7 +186,7 @@
  var spawn = @(->unreal-value spawn);
  var spawnCoords = spawn.GetActorLocation();
 
- var objCoords = @(->unreal-value unreal-location)
+ var objCoords = @(->unreal-value unreal-location) 
  var vect = {X: (objCoords.X - spawnCoords.X),
   Y: (objCoords.Y - spawnCoords.Y),
   Z: (objCoords.Z - spawnCoords.Z)};
@@ -187,7 +207,7 @@
   
   @unreal-value{
  var spawn = @(->unreal-value spawn);
- var obj = @(if (string? name-or-ref)
+ var obj = @(if (string? name-or-ref) 
                 (with-name name-or-ref)
                 (->unreal-value name-or-ref));
  spawn.AttachTo(obj);
@@ -211,8 +231,13 @@
   @unreal-value{
  var spawn = @(->unreal-value spawn);
  var found = spawn.FindNearby().OutActors;
- console.log("FOUND!!!! ", found);
-    return found;
+    return found; 
+  })
+
+(define (is-dead? a)
+  @unreal-value{
+ var spawn = @(->unreal-value a);
+    return !spawn
   })
 
 (define/contract (de-anchor spawn)
@@ -255,8 +280,8 @@
   @unreal-value{
  var a = @(->unreal-value a)
  var l = @(->unreal-value l)
-
- a.SetActorLocation(l)
+ 
+ a.SetActorLocation(l) 
 
  return a
  })
@@ -280,7 +305,7 @@
                          (take l n)
                          l)))
 
-  (set-logs! s (safe-take
+  (set-logs! s (safe-take 
                  (cons l (get-logs s))
                  10)))
 
