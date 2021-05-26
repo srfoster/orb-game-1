@@ -2,7 +2,6 @@
 
 (provide spawn
          respawn
-         is-dead?
          log!
          logs
          distance
@@ -35,7 +34,8 @@
          #%datum)
 
 (require unreal
-         unreal/libs/names)
+         unreal/libs/names
+         unreal/libs/actors)
 
 (define (red-gate-location)
   (hash 'X 0
@@ -234,12 +234,6 @@
     return found; 
   })
 
-(define (is-dead? a)
-  @unreal-value{
- var spawn = @(->unreal-value a);
-    return !spawn
-  })
-
 (define/contract (de-anchor spawn)
   (-> any/c unreal-value?)
   
@@ -284,14 +278,6 @@
  a.SetActorLocation(l) 
 
  return a
- })
-
-(define/contract (locate obj)
-  (-> any/c unreal-value?)
-  
-  @unreal-value{
- var obj = @(->unreal-value obj);
- return obj.GetActorLocation();
  })
 
 (define current-logs (hash))

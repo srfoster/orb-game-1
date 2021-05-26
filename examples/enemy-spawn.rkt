@@ -6,8 +6,8 @@
 
 
 ;for each behavior, first in list is the spell id, followed by arguments
-(define behavior-id-list '([209]
-                           [198]))
+(define behavior-id-list '([75]
+                           [76]))
 
 (displayln "Fetching behaviors from nexus")
 (define behavior-list (map (lambda (id-and-args) 
