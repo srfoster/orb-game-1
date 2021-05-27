@@ -93,7 +93,7 @@
     ))
 
 (define (spawn)
-  (if (get-spawn (current-twitch-id)) 
+  (if (get-spawn (current-twitch-id))
       (let ()
         (unreal-eval-js (unreal:respawn (get-spawn (current-twitch-id))))
         @~a{Respawning...!})
@@ -190,8 +190,8 @@
   (if (not (get-spawn (current-twitch-id)))
       @~a{You don't have a spawn yet!}
       (let ()
-        (define code  (get-spell spell-id))
-        (run-spell (current-twitch-id) code args) 
+        (define code (get-spell spell-id))
+        (run-spell (current-twitch-id) code args)
         @~a{Running your spell... @code})))
 
 (define/contract (show-spell spell-id)
@@ -210,7 +210,7 @@
 (define/contract (errors [twitch-id (current-twitch-id)])
   (-> list?)
   
-  (map exn-message  (get-errors twitch-id)))
+  (map exn-message (get-errors twitch-id)))
 
 (define (logs)
   (~v (unreal:logs (get-spawn (current-twitch-id)))))

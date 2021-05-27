@@ -13,7 +13,7 @@
 
 (require 
   unreal
-  (except-in unreal/libs/actors locate)
+  (except-in unreal/libs/actors locate velocity)
   (prefix-in unreal: orb-game-1/lang)
   (except-in orb-game-1/run-lang with-spawn)
   (prefix-in run-lang: orb-game-1/run-lang)

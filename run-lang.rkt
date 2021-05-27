@@ -1,15 +1,11 @@
-#lang racket/base
+#lang racket
 
 (require unreal
          unreal/libs/basic-types
          unreal/libs/actors
          (prefix-in unreal: orb-game-1/lang)
          racket/generator
-         racket/format
-         racket/match
-         racket/list
-         racket/function
-         racket/string)
+         )
 
 ;Anything provided out of here is useable in spells.
 ;  Use caution!
@@ -20,7 +16,9 @@
  with-spawn
  self
  with-args
+ 
  args
+ inputs
  #%top
  #%module-begin
  #%top-interaction
@@ -110,10 +108,6 @@
  vec
  *vec
  
- ;Level functions
- (rename-out [unreal:blue-gate-location blue-gate-location]
-             [unreal:red-gate-location red-gate-location])
- 
  find-all-nearby
  
  log!
@@ -138,6 +132,8 @@
 (define-syntax-rule (with-args a lines ...)
   (parameterize ([args a])
     lines ...))
+    
+(define-syntax inputs (make-rename-transformer #'args))
 
 (define (wait-for-ticks n)
   (for ([i (in-range 0 n)])

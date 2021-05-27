@@ -5,7 +5,6 @@
          racket/runtime-path
          orb-game-1/lang)
 
-
 (define-runtime-path Build "Build")
 
 (define (prep-for-chat-output v)
@@ -18,7 +17,7 @@
   (bootstrap-and-start-unreal)
 
 
-  (define e 
+  (define e
     (make-safe-evaluator 'orb-game-1/chat))
   
   (start-twitch-bot

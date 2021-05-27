@@ -18,42 +18,26 @@
          red
          blue
          orange
-         red-gate-location
-         blue-gate-location
+
          orb-spawn-location
          
          radial-force
-         start-game
 
-         find-all-nearby
-         
-         #%app
-         #%top
-         #%module-begin
-         #%top-interaction
-         #%datum)
+         find-all-nearby)
 
 (require unreal
          unreal/libs/names
-         unreal/libs/actors)
+         unreal/libs/actors
+         unreal/libs/physics
+         unreal/libs/basic-types)
 
-(define (red-gate-location)
-  (hash 'X 0
-        'Y 0
-        'Z -500))
 
-(define (blue-gate-location)
-  (hash 'X 0
-        'Y 0
-        'Z 500))
-
+;Spawn module:
+;  Orbs can spawn and respawn at a location settable by the orb-spawn-location parameter
 
 (define orb-spawn-location
   (make-parameter (hash 'X 0 'Y 0 'Z 0)))
 
-(orb-spawn-location (hash 'X -420.0 'Y 2210.0 'Z 4973.177246))
-
-; (unreal-eval-js (spawn "Hello"))
 (define/contract (spawn twitch-id)
   (-> string? unreal-value?)
   
@@ -75,47 +59,19 @@
  return spawn;
  })
 
-(define game-loop #f)
-(define number-of-minis #f)
-(define (start-game [n 100]
-                    [strength 1000])
-  (when game-loop
-    (kill-thread game-loop))
-
-  (set! number-of-minis n)
-  
-  (for ([i (in-range number-of-minis)])
-    (define s (unreal-eval-js (spawn (~a i))))
-    (unreal-eval-js (color s "green"))
-    s)
-  
-  (set! game-loop
-        (thread 
-         (thunk
-          (let loop ()
-            (displayln "Moving...")
-            (define to-move (with-name (~a (random number-of-minis))))
-            (unreal-eval-js (color to-move "orange"))
-            (unreal-eval-js 
-             (force to-move 
-                    (random (- strength) strength)
-                    (random (- strength) strength)
-                    (random (- strength) strength)))
-            (sleep 0.1)
-            (unreal-eval-js (color to-move "green"))
-            (loop))))))
-
-#;
-(define (end-game)
-  (when game-loop
-    (kill-thread game-loop))
-
-  (for ([i (in-range number-of-minis)])
-    (unreal-eval-js (destroy-actor (with-name (~a i))))
-    s)
+;End Spawn module
 
 
-  )
+;Color module
+
+(define green
+  "green")
+(define blue
+  "blue")
+(define red
+  "red")
+(define orange
+  "orange")
 
 ; col = red, green, blue, orange OR hex-value
 (define (color spawn col)
@@ -138,37 +94,15 @@
       ["orange" (hash 'X 1 'Y 0.5 'Z 0)]
       [else (hex->vec col)]))
   @unreal-value{
- console.log("Color change")
  var spawn = @(->unreal-value spawn);
- if(!spawn){
-  console.log(Object.keys(global.namedThings))
-  console.log(GWorld.GetAllActorsOfClass(Actor).OutActors.length)
- }
  spawn.ChangeColor(@(->unreal-value color-vec));
  return spawn;
  })
 
-;(unreal-eval-js (radial-force (hash 'X 0 'Y 0 'Z 0)))
-(define (radial-force radius force-strength )
-  @unreal-value{
- var r = new RadialForceActor(GWorld)
+;End color module
 
- r.ForceComponent.ForceStrength = @(->unreal-value force-strength)
- r.ForceComponent.Radius = @(->unreal-value radius)
 
- return r
- })
-
-(define/contract (force spawn x y z)
-  (-> any/c number? number? number? unreal-value?)
-  
-  @unreal-value{
- var spawn = @(->unreal-value spawn);
- var scm = spawn.StaticMeshComponent
- scm.AddImpulse({X:@x,Y:@y,Z:@z})
- 
- return true
- })
+;Forces and anchor module
 
 (define/contract (force-to spawn name-or-location mag)
   (-> any/c (or/c string? hash?) number? unreal-value?)
@@ -202,6 +136,7 @@
  spawn.AddForce(vect2);
  })
 
+
 (define/contract (anchor spawn name-or-ref)
   (-> any/c any/c unreal-value?)
   
@@ -214,26 +149,6 @@
  })
 
 
-(define/contract (distance a b)
-  (-> hash? hash? number?)
-  
-  (define x1 (hash-ref a 'X))
-  (define y1 (hash-ref a 'Y))
-  (define z1 (hash-ref a 'Z))
-  (define x2 (hash-ref b 'X))
-  (define y2 (hash-ref b 'Y))
-  (define z2 (hash-ref b 'Z))
-  (sqrt (+ (sqr (- x1 x2))
-           (sqr (- y1 y2))
-           (sqr (- z1 z2)))))
-
-(define (find-all-nearby spawn)
-  @unreal-value{
- var spawn = @(->unreal-value spawn);
- var found = spawn.FindNearby().OutActors;
-    return found; 
-  })
-
 (define/contract (de-anchor spawn)
   (-> any/c unreal-value?)
   
@@ -242,43 +157,23 @@
  spawn.DetachAll();
  })
 
-(define green
-  "green")
-(define blue
-  "blue")
-(define red
-  "red")
-(define orange
-  "orange")
+;End forces and anchor module
 
-(define (get-all-actors)
+
+;Perception module
+
+(define (find-all-nearby spawn)
   @unreal-value{
-    return GWorld.GetAllActorsOfClass(Actor).OutActors
- })
- 
-(define (camera)
-  @unreal-value{
- return GWorld.GetAllActorsOfClass(CameraActor).OutActors[0]
- })
-
-
-
-;;; TODO: move to unreal package
-
-(define (velocity a)
-  @unreal-value{
-    return @(->unreal-value a).GetVelocity()
+ var spawn = @(->unreal-value spawn);
+ var found = spawn.FindNearby().OutActors;
+    return found; 
   })
 
-(define (set-location a l)
-  @unreal-value{
- var a = @(->unreal-value a)
- var l = @(->unreal-value l)
- 
- a.SetActorLocation(l) 
+;End perception module
 
- return a
- })
+
+;Logs module
+;  Separates logs by spawn, via a hash
 
 (define current-logs (hash))
 
@@ -305,3 +200,5 @@
 ;Takes a spawn (unreal actor)
 (define (logs s)
   (get-logs (hash-ref s 'id)))
+
+;End Logs module
