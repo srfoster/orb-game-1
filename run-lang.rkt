@@ -23,7 +23,8 @@
  #%module-begin
  #%top-interaction
  #%datum
- 
+
+ ;Orb API
  force
  force-to
  anchor
@@ -32,16 +33,17 @@
  velocity
  random
  color
- 
+ find-all-nearby
+ wait-for-ticks ;what does this do?
  (rename-out [unreal:distance distance]
              [unreal:red red]
              [unreal:blue blue]
              [unreal:orange orange]
              [unreal:green green]
              [unreal:with-name with-name])
+ log!
  
  ;Syntax
- set!
  let
  define
  lambda
@@ -56,30 +58,56 @@
  unquote
  and 
  or
- 
- ;Functions
+ set!
+
+;Vector Helper Functions
+ vec
+ +vec
+ *vec
+
+;Void
+ void?
+
+;Logical Operators (would normally include OR and NOT)
  not
+
+;Equality
  equal?
  string=?
- string-contains?
+ string-contains? ;should be in another section about matching?
  eq?
+
+ ;Comparison Operators
  >=
  <=
  =
  <
  >
+
+ ;Mathematical Operators
  +
  -
  *
  /
+ 
+ ;Math Helper Functions
+ positive?
+ negative?
  round
+ min
+ max
+ abs
+ add1
+ modulo
+ 
+ ;Hash Helper Functions
  hash
  hash-ref
  hash-keys
  hash-values
  hash-has-key?
- positive?
- negative?
+ 
+ ;List Helper Functions
  list
  shuffle
  length
@@ -91,27 +119,18 @@
  empty?
  list?
  list-ref
+
+ ;Higher Order Functions
  filter 
  map
  findf
  foldl
  apply
- min
- max
- abs
- add1
- modulo
+
+;Conversion Functions
  string->number
  number->string
- void?
- +vec
- vec
- *vec
- 
- find-all-nearby
- 
- log!
- wait-for-ticks)
+ )
 
 
 
