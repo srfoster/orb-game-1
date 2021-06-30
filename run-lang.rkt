@@ -130,8 +130,10 @@
 ;Conversion Functions
  string->number
  number->string
- )
 
+ (all-from-out net/http-easy))
+
+ (require net/http-easy)
 
 
 (define spawn (make-parameter #f))
